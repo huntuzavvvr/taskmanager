@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: taskmanager
+  datasource:
+    url: jdbc:postgresql://localhost:5432/taskmanager
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  liquibase:
+    change-log: classpath:/db/changelog/changelog.yml
+    enabled: true

@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/create-changeset-category-table.sql
+  - include:
+      file: db/changelog/create-changeset-users-table.sql
+  - include:
+      file: db/changelog/create-changeset-task-table.sql
+#  - include:
+#      file: db/changelog/create-changeset-task-table.sql
