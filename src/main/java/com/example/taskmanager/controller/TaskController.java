@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/task")
+@RequestMapping("/api/tasks")
 @RequiredArgsConstructor
 public class TaskController {
 
@@ -20,7 +20,7 @@ public class TaskController {
 
     @PostMapping
     public ResponseEntity<TaskDto> create(@RequestBody TaskDto task) {
-        return ResponseEntity.status(HttpStatus.OK).body(taskService.create(task));
+        return ResponseEntity.status(HttpStatus.CREATED).body(taskService.create(task));
     }
 
     @GetMapping
@@ -39,8 +39,8 @@ public class TaskController {
     }
 
     @GetMapping("/category/{name}")
-    public List<TaskDto> findByCategory(@PathVariable String name) {
-        return taskService.findByCategory(name);
+    public ResponseEntity<List<TaskDto>> findByCategory(@PathVariable String name) {
+        return ResponseEntity.status(HttpStatus.OK).body(taskService.findByCategory(name));
     }
 
     @PutMapping("/{id}")

@@ -9,7 +9,7 @@ import java.io.Serializable;
 public class TaskDto implements Serializable {
     private Long id;
     private String description;
-    private boolean completed;
+    private Boolean completed;
     private TaskType type;
     private Long userId;
     private Long categoryId;

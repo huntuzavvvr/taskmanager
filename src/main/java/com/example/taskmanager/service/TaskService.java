@@ -11,8 +11,11 @@ import com.example.taskmanager.model.Category;
 import com.example.taskmanager.model.TaskType;
 import com.example.taskmanager.repository.TaskRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,14 +23,17 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TaskService {
 
     private final TaskRepository taskRepository;
     private final UserService userService;
     private final CategoryService categoryService;
 
-    @CacheEvict(value = {"tasks", "tasksAll"}, allEntries = true)
+    @CacheEvict(value = {"tasksAll", "tasksByType", "tasksByCategory"}, allEntries = true)
+    @CachePut(value = "tasks", key = "#result.id")
     public TaskDto create(TaskDto dto) {
+        log.info("Creating task: {}", dto);
         Task task = TaskMapper.toEntity(dto);
 
         if (dto.getUserId() != null) {
@@ -59,7 +65,7 @@ public class TaskService {
         return TaskMapper.toDto(task);
     }
 
-    @Cacheable(value = "tasks", key = "#type.name")
+    @Cacheable(value = "tasksByType", key = "#type.name")
     public List<TaskDto> findByType(TaskType type) {
         return taskRepository.findByType(type)
                 .stream()
@@ -67,7 +73,7 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
-    @Cacheable(value = "tasks", key = "#categoryName")
+    @Cacheable(value = "tasksByCategory", key = "#categoryName")
     public List<TaskDto> findByCategory(String categoryName) {
         return taskRepository.findByCategory_Name(categoryName)
                 .stream()
@@ -75,14 +81,21 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
-    @CacheEvict(value = {"tasks", "tasksAll"}, allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "tasksAll", allEntries = true),
+            @CacheEvict(value = "tasksByCategory", key = "#result.categoryId"),
+            @CacheEvict(value = "tasksByType", key = "#result.type.name")
+
+    })
+    @CachePut(value = "tasks", key = "#id")
     public TaskDto update(Long id, TaskDto dto) {
+        log.info("Updating task: {}", dto);
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
 
-        task.setDescription(dto.getDescription());
-        task.setCompleted(dto.isCompleted());
-        task.setType(dto.getType());
+        if (dto.getDescription() != null) task.setDescription(dto.getDescription());
+        if (dto.getType() != null) task.setType(dto.getType());
+        if (dto.getCompleted() != null) task.setCompleted(dto.getCompleted());
 
         if (dto.getUserId() != null) {
             task.setUser(UserMapper.toEntity(userService.findById(dto.getUserId())));
@@ -95,8 +108,12 @@ public class TaskService {
         return TaskMapper.toDto(taskRepository.save(task));
     }
 
-    @CacheEvict(value = {"tasks", "tasksAll"}, allEntries = true)
+    @Caching(evict = {
+            @CacheEvict(value = "tasks", key = "#id"),
+            @CacheEvict(value = {"tasksAll", "tasksByType", "tasksByCategory"}, allEntries = true)
+    })
     public void delete(Long id) {
+        log.info("Deleting task with id: {}", id);
         taskRepository.deleteById(id);
     }
 }

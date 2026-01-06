@@ -26,7 +26,7 @@ public class TaskMapper {
         Task task = new Task();
         task.setId(dto.getId());
         task.setDescription(dto.getDescription());
-        task.setCompleted(dto.isCompleted());
+        task.setCompleted(dto.getCompleted());
         task.setType(dto.getType());
         return task;
     }
