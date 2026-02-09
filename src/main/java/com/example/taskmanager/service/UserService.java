@@ -12,7 +12,10 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,23 +27,21 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    @Cacheable(value = "usersAll")
-    public List<UserDto> findAll() {
-        return userRepository.findAll()
-                .stream()
-                .map(UserMapper::toDto)
-                .collect(Collectors.toList());
+    @Cacheable(value = "usersPage", key = "#pageable.pageNumber + '-' + #pageable.pageSize + '_' + #pageable.sort.toString()")
+    public Page<UserDto> findAll(Pageable pageable) {
+        return userRepository.findAll(pageable).map(UserMapper::toDto);
     }
 
     @Cacheable(value = "users", key = "#id")
     public UserDto findById(Long id) {
-        User user = userRepository.findById(id)
+        var user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
         return UserMapper.toDto(user);
     }
 
 
-    @CacheEvict(value = "usersAll", allEntries = true)
+    @Transactional
+    @CacheEvict(value = "usersPage", allEntries = true)
     @CachePut(value = "users", key = "#result.id")
     public UserDto create(UserDto dto) {
         log.info("Creating user: {}", dto);
@@ -48,17 +49,19 @@ public class UserService {
         return UserMapper.toDto(userRepository.save(user));
     }
 
-    @CacheEvict(value = "usersAll", allEntries = true)
+    @Transactional
+    @CacheEvict(value = "usersPage", allEntries = true)
     @CachePut(value = "users", key = "#id")
     public UserDto update(Long id, UserDto dto) {
         log.info("Updating user: {}", dto);
-        User user = userRepository.findById(id)
+        var user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));
         user.setName(dto.getName());
         return UserMapper.toDto(userRepository.save(user));
     }
 
-    @CacheEvict(value = {"users", "usersAll"}, allEntries = true)
+    @Transactional
+    @CacheEvict(value = {"users", "usersPage"}, allEntries = true)
     public void delete(Long id) {
         log.info("Deleting user with id: {}", id);
         userRepository.deleteById(id);

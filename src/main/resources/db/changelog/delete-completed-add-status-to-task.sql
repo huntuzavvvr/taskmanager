@@ -1,0 +1,8 @@
+ALTER TABLE task
+ADD COLUMN status VARCHAR(30);
+
+UPDATE task
+SET status = 'RUNNING';
+
+ALTER TABLE task
+ALTER COLUMN status SET NOT NULL;

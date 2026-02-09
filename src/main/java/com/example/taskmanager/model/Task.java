@@ -4,6 +4,8 @@ package com.example.taskmanager.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 public class Task {
@@ -13,7 +15,12 @@ public class Task {
     private Long id;
 
     private String description;
-    private boolean completed;
+
+    @Enumerated(EnumType.STRING)
+    private TaskStatus status;
+
+    @Column(updatable = false,  nullable = false)
+    private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
     private TaskType type;
@@ -23,4 +30,9 @@ public class Task {
 
     @ManyToOne
     private Category category;
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

@@ -15,5 +15,34 @@ spring:
   liquibase:
     change-log: classpath:/db/changelog/changelog.yml
     enabled: true
-#  cache:
-#    type: simple
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+        retry.backoff.ms: 1000
+        delivery.timeout.ms: 120000
+        request.timeout.ms: 30000
+      retries: 5
+      acks: all
+
+redis:
+  enabled: true
+
+logging:
+  level:
+    org.springframework.boot.autoconfigure: DEBUG
+    org.springframework.kafka: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    env:
+      show-values: always
+

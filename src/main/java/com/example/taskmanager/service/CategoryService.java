@@ -11,7 +11,10 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,42 +26,43 @@ public class CategoryService {
 
     private final CategoryRepository categoryRepository;
 
-    @Cacheable(value = "categoriesAll")
-    public List<CategoryDto> findAll() {
-        return categoryRepository.findAll()
-                .stream()
-                .map(CategoryMapper::toDto)
-                .collect(Collectors.toList());
+
+    @Cacheable(value = "categoriesPage", key = "#pageable.pageNumber + '_' + #pageable.pageSize + '_' + #pageable.sort.toString()")
+    public Page<CategoryDto> findAll(Pageable pageable) {
+        return categoryRepository.findAll(pageable).map(CategoryMapper::toDto);
     }
 
     @Cacheable(value = "categories", key = "#id")
     public CategoryDto findById(Long id) {
-        Category category = categoryRepository.findById(id)
+        var category = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryNotFoundException(id));
         return CategoryMapper.toDto(category);
     }
 
-    @CacheEvict(value = "categoriesAll", allEntries = true)
+    @Transactional
+    @CacheEvict(value = "categoriesPage", allEntries = true)
     @CachePut(value = "categories", key = "#result.id")
     public CategoryDto create(CategoryDto dto) {
         log.info("Creating category: {}", dto);
-        Category category = CategoryMapper.toEntity(dto);
+        var category = CategoryMapper.toEntity(dto);
         return CategoryMapper.toDto(categoryRepository.save(category));
     }
 
-    @CacheEvict(value = "categoriesAll", allEntries = true)
+    @Transactional
+    @CacheEvict(value = "categoriesPage", allEntries = true)
     @CachePut(value = "categories", key = "#result.id")
     public CategoryDto update(Long id, CategoryDto dto) {
         log.info("Updating category: {}", dto);
-        Category category = categoryRepository.findById(id)
+        var category = categoryRepository.findById(id)
                 .orElseThrow(() -> new CategoryNotFoundException(id));
         category.setName(dto.getName());
         return CategoryMapper.toDto(categoryRepository.save(category));
     }
 
+    @Transactional
     @Caching(evict = {
             @CacheEvict(value = "categories", key = "#id"),
-            @CacheEvict(value = "categoriesAll", allEntries = true)
+            @CacheEvict(value = "categoriesPage", allEntries = true)
     })
     public void delete(Long id) {
         log.info("Deleting category with id: {}", id);

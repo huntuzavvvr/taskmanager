@@ -5,5 +5,7 @@ databaseChangeLog:
       file: db/changelog/create-changeset-users-table.sql
   - include:
       file: db/changelog/create-changeset-task-table.sql
-#  - include:
-#      file: db/changelog/create-changeset-task-table.sql
+  - include:
+      file: db/changelog/add-created-at-to-task.sql
+  - include:
+      file: db/changelog/delete-completed-add-status-to-task.sql

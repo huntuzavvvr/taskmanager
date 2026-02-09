@@ -5,6 +5,10 @@ import com.example.taskmanager.dto.UserDto;
 import com.example.taskmanager.model.User;
 import com.example.taskmanager.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +27,15 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(user));
     }
 
-    @GetMapping()
-    public ResponseEntity<List<UserDto>> findAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());
+
+    @GetMapping
+    public ResponseEntity<Page<UserDto>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "2") int size,
+            @RequestParam(defaultValue = "id") String sortBy
+            ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        return ResponseEntity.status(HttpStatus.OK).body(userService.findAll(pageable));
     }
 
     @GetMapping("/{id}")

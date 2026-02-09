@@ -4,6 +4,10 @@ import com.example.taskmanager.dto.CategoryDto;
 import com.example.taskmanager.model.Category;
 import com.example.taskmanager.service.CategoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,9 +20,19 @@ import java.util.List;
 public class CategoryController {
     private final CategoryService categoryService;
 
+//    @GetMapping
+//    public ResponseEntity<List<CategoryDto>> findAll() {
+//        return ResponseEntity.status(HttpStatus.OK).body(categoryService.findAll());
+//    }
+
     @GetMapping
-    public ResponseEntity<List<CategoryDto>> findAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(categoryService.findAll());
+    public ResponseEntity<Page<CategoryDto>> findAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "2") int size,
+            @RequestParam(defaultValue = "id") String sortBy
+    ) {
+        Pageable pageable = PageRequest.of(page, size,  Sort.by(sortBy).ascending());
+        return ResponseEntity.status(HttpStatus.OK).body(categoryService.findAll(pageable));
     }
 
     @GetMapping("/{id}")

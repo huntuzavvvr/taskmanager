@@ -1,4 +1,6 @@
 package com.example.taskmanager.model;
 
-public class TaskStatus {
+public enum TaskStatus {
+    RUNNING,
+    COMPLETED,
 }

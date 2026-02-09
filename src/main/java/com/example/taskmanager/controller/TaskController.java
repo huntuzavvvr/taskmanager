@@ -2,13 +2,21 @@ package com.example.taskmanager.controller;
 
 import com.example.taskmanager.dto.TaskDto;
 import com.example.taskmanager.model.Task;
+import com.example.taskmanager.model.TaskStatus;
 import com.example.taskmanager.model.TaskType;
 import com.example.taskmanager.service.TaskService;
+import com.example.taskmanager.specification.TaskSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -23,9 +31,31 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.CREATED).body(taskService.create(task));
     }
 
+//    @GetMapping
+//    public ResponseEntity<List<TaskDto>> getAll() {
+//        return ResponseEntity.status(HttpStatus.OK).body(taskService.findAll());
+//    }
+
     @GetMapping
-    public ResponseEntity<List<TaskDto>> getAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(taskService.findAll());
+    public ResponseEntity<Page<TaskDto>> findAll(
+            @RequestParam(required = false) LocalDateTime startDate,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "2") int size,
+            @RequestParam(defaultValue = "id") String sortBy
+    ) {
+        Specification<Task> specification = Specification.anyOf();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+
+        if (startDate == null && status == null) {
+            return ResponseEntity.status(HttpStatus.OK).body(taskService.findAll(pageable));
+
+        }
+
+        if (startDate != null) specification = specification.and(TaskSpecification.createdAfter(startDate));
+        if (status != null) specification = specification.and(TaskSpecification.byStatus(status));
+
+        return ResponseEntity.status(HttpStatus.OK).body(taskService.findAll(specification, pageable));
     }
 
     @GetMapping("/{id}")
